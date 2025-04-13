@@ -1,111 +1,89 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Calendar, Bell, User, Image, Mail, Settings, LogOut } from 'lucide-react';
+import React from 'react';
+import { Link, useLocation, Outlet } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  Calendar,
+  Users,
+  Settings,
+  LogOut,
+  Heart,
+  Ticket,
+  Shield,
+  DollarSign,
+  Flag,
+  Building2,
+  Lock
+} from 'lucide-react';
 
-const DashboardLayout: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const DashboardLayout = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const isAdmin = user?.isAdmin;
 
-  const getNavItemClass = (path: string): string => {
-    const isActive = location.pathname === path;
-    return `flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-      isActive
-        ? 'bg-primary-light/20 text-primary'
-        : 'text-secondary hover:bg-primary-light/10'
-    }`;
-  };
+  const adminNavItems = [
+    { path: '/dashboard/admin', label: 'Overview', icon: Shield },
+    { path: '/dashboard/admin/events', label: 'Events', icon: Calendar },
+    { path: '/dashboard/admin/roles', label: 'User Management', icon: Users },
+    { path: '/dashboard/admin/sponsors', label: 'Sponsorships', icon: Building2 },
+    { path: '/dashboard/admin/financial', label: 'Financial', icon: DollarSign },
+    { path: '/dashboard/admin/security', label: 'Security', icon: Lock },
+  ];
+
+  const attendeeNavItems = [
+    { path: '/dashboard/attendee', label: 'Events', icon: Calendar },
+    { path: '/dashboard/favorites', label: 'Favorites', icon: Heart },
+    { path: '/dashboard/bookings', label: 'My Bookings', icon: Ticket },
+  ];
+
+  const navItems = isAdmin ? adminNavItems : attendeeNavItems;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-purple-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">EventMaster</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-600 hover:text-gray-900">
-                <Bell className="w-5 h-5" />
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center space-x-2 p-2 text-gray-600 hover:text-gray-900"
+    <div className="min-h-screen flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-[#432818] text-white flex flex-col">
+        <div className="p-4">
+          <Link to="/" className="flex items-center space-x-2">
+            <Calendar className="w-8 h-8" />
+            <span className="text-xl font-bold">EventMaster</span>
+          </Link>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {navItems.map((item) => (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    location.pathname === item.path
+                      ? 'bg-[#6F1D1B] text-white'
+                      : 'text-white/90 hover:bg-[#6F1D1B]/80'
+                  }`}
                 >
-                  <User className="w-5 h-5" />
-                  <span>Artist Name</span>
-                </button>
-                {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <Link
-                      to="/dashboard/artist"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Image className="w-4 h-4 mr-2" />
-                      Portfolio
-                    </Link>
-                    <Link
-                      to="/dashboard/artist/invites"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Mail className="w-4 h-4 mr-2" />
-                      Invites
-                    </Link>
-                    <Link
-                      to="/dashboard/artist/settings"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                    <button className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+                  <item.icon className="w-5 h-5" />
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="flex">
-          {/* Sidebar */}
-          <div className="w-64 pr-4">
-            <nav className="space-y-1">
-              <Link
-                to="/dashboard/artist"
-                className={getNavItemClass('/dashboard/artist')}
-              >
-                <Image className="w-5 h-5 mr-3" />
-                Portfolio
-              </Link>
-              <Link
-                to="/dashboard/artist/invites"
-                className={getNavItemClass('/dashboard/artist/invites')}
-              >
-                <Mail className="w-5 h-5 mr-3" />
-                Event Invites
-              </Link>
-              <Link
-                to="/dashboard/artist/events"
-                className={getNavItemClass('/dashboard/artist/events')}
-              >
-                <Calendar className="w-5 h-5 mr-3" />
-                My Events
-              </Link>
-            </nav>
-          </div>
-
-          {/* Content Area */}
-          <div className="flex-1">
-            <Outlet />
-          </div>
+        {/* Bottom section */}
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={() => logout()}
+            className="flex items-center space-x-2 px-4 py-2 w-full text-white/90 hover:text-white rounded-lg hover:bg-[#6F1D1B]/80 transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
         </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 overflow-auto">
+        <Outlet />
       </div>
     </div>
   );

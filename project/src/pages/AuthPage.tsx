@@ -1,6 +1,7 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { Calendar, Image, Music, FileText } from 'lucide-react';
+import { Calendar, Image, Music, FileText, User, Mic2, Users, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ArtistFormData {
   bio: string;
@@ -10,29 +11,55 @@ interface ArtistFormData {
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login, signup } = useAuth();
   const [isLogin, setIsLogin] = useState<boolean>(true);
-  const [role, setRole] = useState<string>('attendee');
+  const [selectedRole, setSelectedRole] = useState<string>('attendee');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
   const [artistData, setArtistData] = useState<ArtistFormData>({
     bio: '',
     genres: [],
     profilePhoto: null
   });
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
     
-    // In a real app, you would make an API call here
-    // For now, we'll simulate successful auth and redirect
-    
-    if (isLogin) {
-      // Simulate login - in real app, validate credentials
-      navigate(`/dashboard/${role}`);
-    } else {
-      // Simulate registration - in real app, create account
-      navigate(`/dashboard/${role}`);
+    try {
+      if (isLogin) {
+        await login(email, password);
+        // Let the ProtectedRoute handle the redirection
+        navigate('/dashboard');
+      } else {
+        await signup(email, password, selectedRole);
+        // Navigate based on role
+        switch (selectedRole) {
+          case 'attendee':
+            navigate('/dashboard/attendee');
+            break;
+          case 'artist':
+            navigate('/dashboard/artist');
+            break;
+          case 'organizer':
+            navigate('/dashboard/organizer');
+            break;
+          case 'admin':
+            navigate('/dashboard/admin');
+            break;
+          default:
+            navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      setError(isLogin ? 'Failed to log in' : 'Failed to create account');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -55,8 +82,12 @@ const AuthPage: React.FC = () => {
     }));
   };
 
+  const handleRoleSelect = (role: string) => {
+    setSelectedRole(role);
+  };
+
   const renderArtistFields = (): JSX.Element | null => {
-    if (role !== 'artist' || isLogin) return null;
+    if (selectedRole !== 'artist' || isLogin) return null;
 
     const genreOptions = [
       'Rock', 'Pop', 'Jazz', 'Classical', 'Hip Hop',
@@ -154,15 +185,18 @@ const AuthPage: React.FC = () => {
               <label className="block text-sm font-medium text-secondary">
                 I am a...
               </label>
-              <select
-                value={role}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) => setRole(e.target.value)}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-primary-light rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary-light"
-              >
-                <option value="attendee">Attendee</option>
-                <option value="artist">Artist</option>
-                <option value="organizer">Organizer</option>
-              </select>
+              <div className="mt-1">
+                <select
+                  value={selectedRole}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => handleRoleSelect(e.target.value)}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-primary-light rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary-light"
+                >
+                  <option value="attendee">Attendee</option>
+                  <option value="artist">Artist</option>
+                  <option value="organizer">Organizer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
             </div>
           )}
 
